@@ -49,19 +49,31 @@ class Program
         while (true)
         {
             Console.WriteLine("1. Добавить сотрудника");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("2. Удалить сотрудника");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("3. Поиск сотрудника по фамилии");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("4. Трудовая история сотрудника");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("5. Изменение дат начала и окончания работы сотрудника");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("6. История зарплаты сотрудника");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("7. Заработная плата сотрудника");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("8. Экспорт в XML-файл");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("9. Показать всех сотрудников");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("10. Сотрудники, работающие в нескольких отделах");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("11. Года с наибольшим и наименьшим числом приема и увольнения сотрудников");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("12. Сотрудники с юбилеем в этом году");
+            Console.WriteLine("--------------------------");
             Console.WriteLine("0. Выход");
-
+            Console.WriteLine("--------------------------");
             int choice = int.Parse(Console.ReadLine());
 
             switch (choice)
@@ -111,26 +123,55 @@ class Program
             }
         }
     }
+    
+
+    private static int GetEmployeeCountByDepartment(string department)
+    {
+        return employees.Count(e => e.Jobs.Any(j => j.JobDepartment.ToString() == department));
+    }
+
+    private static int GetYoungEmployeeCountByDepartment(string department)
+    {
+        int currentYear = DateTime.Today.Year;
+        return employees.Count(e => e.Jobs.Any(j => j.JobDepartment.ToString() == department) && (currentYear - e.DateOfBirth.Year) < 30);
+    }
+
 
     private static void AddEmployee()
     {
-        Console.WriteLine("Enter employee ID:");
+        Console.WriteLine("Введите порядковый номер сотрудника, которого Вы хотите добавить:");
         string id = Console.ReadLine();
 
         if (employees.Any(e => e.ID == id))
         {
-            Console.WriteLine("Employee with this ID already exists.");
+            Console.WriteLine("Сотрудник с таким номером уже существует.");
             return;
         }
 
-        Console.WriteLine("Enter employee first name:");
+        Console.WriteLine("Введите его имя:");
         string firstName = Console.ReadLine();
 
-        Console.WriteLine("Enter employee last name:");
+        Console.WriteLine("Введите его фамилию:");
         string lastName = Console.ReadLine();
 
-        Console.WriteLine("Enter employee date of birth (yyyy-MM-dd):");
-        DateTime dateOfBirth = DateTime.Parse(Console.ReadLine());
+        DateTime dateOfBirth = DateTime.MinValue;
+
+     
+        while (dateOfBirth == DateTime.MinValue)
+        {
+            Console.WriteLine("Введите дату рождения сотрудника (в формате гггг-мм-дд :");
+            if (DateTime.TryParse(Console.ReadLine(), out DateTime dob))
+            {
+                dateOfBirth = dob;
+            }
+            else
+            {
+                Console.WriteLine("Неверный формат даты. Попробуйте ещё разок.");
+            }
+        }
+
+       
+        DateTime hireDate = DateTime.Today;
 
         Employee newEmployee = new Employee
         {
@@ -140,31 +181,30 @@ class Program
             DateOfBirth = dateOfBirth
         };
 
-        Console.WriteLine("Choose the department where the employee will work (IT, Logistics, Management, Supply):");
-        string departmentInput = Console.ReadLine();
+        Job.Department defaultDepartment = Job.Department.IT;
 
-        if (Enum.TryParse<Job.Department>(departmentInput, true, out var selectedDepartment))
+        Job newJob = new Job
         {
-            Job newJob = new Job
-            {
-                JobDepartment = selectedDepartment
-            };
+            JobTitle = "Default Job Title",
+            StartDate = hireDate,
+            EndDate = DateTime.MaxValue, 
+            JobDepartment = defaultDepartment
+        };
 
-            newEmployee.Jobs.Add(newJob);
-            employees.Add(newEmployee);
+        newEmployee.Jobs.Add(newJob);
 
-            Console.WriteLine($"Employee {firstName} {lastName} added successfully to the {selectedDepartment} department.");
-        }
-        else
-        {
-            Console.WriteLine("Invalid department choice. Employee not added.");
-        }
+        employees.Add(newEmployee);
+
+        Console.WriteLine($"Сотрудник {firstName} {lastName} успешно добавлен. Дата приема на работу: {hireDate:dd.MM.yyyy}");
     }
+
+
+
 
 
     private static void DeleteEmployee()
     {
-        Console.WriteLine("Enter the ID of the employee to delete:");
+        Console.WriteLine("Введите номер сотрудника для удаления его из системы:");
         string idToDelete = Console.ReadLine();
 
         Employee employeeToDelete = employees.FirstOrDefault(e => e.ID == idToDelete);
@@ -172,17 +212,17 @@ class Program
         if (employeeToDelete != null)
         {
             employees.Remove(employeeToDelete);
-            Console.WriteLine($"Employee {employeeToDelete.FirstName} {employeeToDelete.LastName} deleted successfully.");
+            Console.WriteLine($"Сотрудник - {employeeToDelete.FirstName} {employeeToDelete.LastName} успешно удалён из системы.");
         }
         else
         {
-            Console.WriteLine("Employee not found.");
+            Console.WriteLine("Сотрудник не найден.");
         }
     }
 
     private static void SearchEmployee()
     {
-        Console.WriteLine("Enter the last name of the employee to search:");
+        Console.WriteLine("Введите фамилию сотрудника, чтобы начать поиск:");
         string lastName = Console.ReadLine();
 
         Employee foundEmployee = employees.FirstOrDefault(e => e.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase));
@@ -191,17 +231,17 @@ class Program
 
         if (foundEmployee != null)
         {
-            Console.WriteLine($"Found employee: {foundEmployee.FirstName} {foundEmployee.LastName}");
+            Console.WriteLine($"Сотрудник: {foundEmployee.FirstName} {foundEmployee.LastName}");
 
             var departments = foundEmployee.Jobs.Select(j => j.JobDepartment.ToString());
             string departmentList = string.Join(", ", departments);
 
-            Console.WriteLine($"Department(s): {departmentList}");
-            Console.WriteLine($"Date of Birth: {foundEmployee.DateOfBirth:yyyy-MM-dd}");
+            Console.WriteLine($"Отдел(ы): {departmentList}");
+            Console.WriteLine($"Дата рождения: {foundEmployee.DateOfBirth:yyyy-MM-dd}");
         }
         else
         {
-            Console.WriteLine("No employees found.");
+            Console.WriteLine("Сотрудники не найдены.");
         }
 
         Console.WriteLine("--------------------------------------------------");
@@ -212,60 +252,63 @@ class Program
 
     private static void EmployeeWorkHistory()
     {
-        Console.WriteLine("Enter the ID of the employee to display work history:");
+        Console.WriteLine("Введите номер сотрудника для отображения его трудовой истории:");
         string employeeId = Console.ReadLine();
 
         Employee employee = employees.FirstOrDefault(e => e.ID == employeeId);
 
         if (employee != null)
         {
-            Console.WriteLine($"Work history for {employee.FirstName} {employee.LastName}:");
+            Console.WriteLine($"Работа - {employee.FirstName} {employee.LastName}:");
 
             foreach (var job in employee.Jobs)
             {
-                Console.WriteLine($"{job.JobDepartment} => {job.StartDate:dd/MM/yyyy}-{job.EndDate:dd/MM/yyyy}");
+               
+                string endDate = (job.EndDate == DateTime.MaxValue) ? DateTime.Today.ToString("dd.MM.yyyy") : job.EndDate.ToString("dd.MM.yyyy");
+
+                Console.WriteLine($"{job.JobDepartment} => {job.StartDate:dd.MM.yyyy}-{endDate}");
             }
 
-            Console.WriteLine("Enter the name of the department to update work dates (or enter 'exit' to exit):");
+            Console.WriteLine("Введите названиие отдела для изменения(или введите 'exit' для выхода :");
             string departmentName = Console.ReadLine();
 
             if (departmentName.ToLower() != "exit")
             {
                 var selectedJob = employee.Jobs.FirstOrDefault(j => j.JobDepartment.ToString().ToLower(CultureInfo.InvariantCulture) == departmentName.ToLower(CultureInfo.InvariantCulture));
 
-
                 if (selectedJob != null)
                 {
-                    Console.WriteLine($"You've selected job at {selectedJob.JobDepartment} => {selectedJob.StartDate:dd/MM/yyyy}-{selectedJob.EndDate:dd/MM/yyyy}");
+                    Console.WriteLine($" Вы выбрали {selectedJob.JobDepartment} => {selectedJob.StartDate:dd/MM/yyyy}-{selectedJob.EndDate:dd/MM/yyyy}");
 
-                    // Дальнейший код для обновления дат
+                    // Further code for updating dates if needed
                 }
                 else
                 {
-                    Console.WriteLine("Invalid department name. Exiting without updating.");
+                    Console.WriteLine("Неверное название отдела. У нас такого нет :) ");
                 }
             }
             else
             {
-                Console.WriteLine("Exiting without updating.");
+                Console.WriteLine("Выход без изменения.");
             }
         }
         else
         {
-            Console.WriteLine("Employee not found.");
+            Console.WriteLine("Сотрудник не найден.");
         }
     }
 
+
     private static void ChangeWorkDates()
     {
-        Console.WriteLine("Enter the ID of the employee to change work dates:");
+        Console.WriteLine("Введите номер сотрудника для изменения периода работы:");
         string employeeId = Console.ReadLine();
 
         Employee employee = employees.FirstOrDefault(e => e.ID == employeeId);
 
         if (employee != null)
         {
-            Console.WriteLine("Enter the name of the department to update work dates (or enter 'exit' to exit):");
+            Console.WriteLine("Введите название отдела для изменения работы:");
             string departmentName = Console.ReadLine();
 
             if (!string.Equals(departmentName, "exit", StringComparison.OrdinalIgnoreCase))
@@ -277,77 +320,161 @@ class Program
 
                 if (selectedJob != null)
                 {
-                    Console.WriteLine($"You've selected job at {selectedJob.JobDepartment} => {selectedJob.StartDate:dd/MM/yyyy}-{selectedJob.EndDate:dd/MM/yyyy}");
+                    Console.WriteLine($"Вы выбрали - {selectedJob.JobDepartment} => {selectedJob.StartDate:dd/MM/yyyy}-{selectedJob.EndDate:dd/MM/yyyy}");
 
-                    Console.WriteLine("Enter the new start date (yyyy-MM-dd):");
+                    Console.WriteLine("Введите новую дату начала (yyyy-MM-dd):");
                     DateTime newStartDate = DateTime.Parse(Console.ReadLine());
 
-                    Console.WriteLine("Enter the new end date (yyyy-MM-dd):");
+                    Console.WriteLine("Введите конечную дату (yyyy-MM-dd):");
                     DateTime newEndDate = DateTime.Parse(Console.ReadLine());
 
                     selectedJob.StartDate = newStartDate;
                     selectedJob.EndDate = newEndDate;
 
-                    Console.WriteLine("Work dates updated successfully.");
+                    Console.WriteLine("История работы успешно сохранена.");
                 }
                 else
                 {
-                    Console.WriteLine("Exiting without updating. Department not found.");
+                    Console.WriteLine("Выход без изменения. Такого отдела нет.");
                 }
             }
             else
             {
-                Console.WriteLine("Exiting without updating.");
+                Console.WriteLine("Выход без изменения.");
             }
         }
         else
         {
-            Console.WriteLine("Employee not found.");
+            Console.WriteLine("Сотрудник не найден.");
         }
     }
 
 
 
+    private static void UpdateSalaryHistory(Employee employee)
+    {
+        Console.WriteLine("Выберите:");
+        Console.WriteLine("--------------------------");
+        Console.WriteLine("1. Ввести новую зарплату");
+        Console.WriteLine("--------------------------");
+        Console.WriteLine("2. Удалить зарплату из истории");
+        Console.WriteLine("--------------------------");
+        Console.WriteLine("3. Выйти в главное меню");
+        Console.WriteLine("--------------------------");
+
+        int choice = int.Parse(Console.ReadLine());
+
+        switch (choice)
+        {
+            case 1:
+                AddSalaryEntry(employee);
+                break;
+            case 2:
+                RemoveSalaryEntry(employee);
+                break;
+            case 3:
+                Console.WriteLine("Выход без изменений.");
+                break;
+            default:
+                Console.WriteLine("Неправильный выбор. Выход без изменений .");
+                break;
+        }
+    }
+
+    private static void AddSalaryEntry(Employee employee)
+    {
+        Console.WriteLine("Введите год начала начисления:");
+        int year = int.Parse(Console.ReadLine());
+
+        Console.WriteLine("Введите месяц начала начисления:");
+        int month = int.Parse(Console.ReadLine());
+
+        Console.WriteLine("Введите сумму начисления:");
+        decimal total = decimal.Parse(Console.ReadLine());
+
+        Salary newSalary = new Salary
+        {
+            Year = year,
+            Month = month,
+            Total = total
+        };
+
+        employee.Salaries.Add(newSalary);
+
+        Console.WriteLine($" Новая зарплата добавлена {year}-{month:00} => {total} рублей");
+    }
+
+    private static void RemoveSalaryEntry(Employee employee)
+    {
+        Console.WriteLine("Введите год начала начислений для удаления:");
+        int yearToRemove = int.Parse(Console.ReadLine());
+
+        Console.WriteLine("Введите месяц начала начислений для удаления:");
+        int monthToRemove = int.Parse(Console.ReadLine());
+
+        Salary salaryToRemove = employee.Salaries.FirstOrDefault(s => s.Year == yearToRemove && s.Month == monthToRemove);
+
+        if (salaryToRemove != null)
+        {
+            employee.Salaries.Remove(salaryToRemove);
+            Console.WriteLine($"Записи о начислениях с  {yearToRemove}-{monthToRemove:00} успешно удалены.");
+        }
+        else
+        {
+            Console.WriteLine("Начисления не найдены в эти даты.");
+        }
+    }
 
 
     private static void DisplaySalaryHistory()
     {
-        Console.WriteLine("Enter the ID of the employee to display salary history:");
+        Console.WriteLine("Введите номер сотрудника для отображения истории начислений:");
         string employeeId = Console.ReadLine();
 
         Employee employee = employees.FirstOrDefault(e => e.ID == employeeId);
 
         if (employee != null)
         {
-            Console.WriteLine($"Salary history for {employee.FirstName} {employee.LastName}:");
+            Console.WriteLine($"История начислений - {employee.FirstName} {employee.LastName}:");
 
             foreach (var salary in employee.Salaries.OrderBy(s => new DateTime(s.Year, s.Month, 1)))
-
             {
                 Console.WriteLine($"{salary.Year}-{salary.Month:00} => {salary.Total} rubles");
+            }
+
+            Console.WriteLine("Хотите внести изменения в историю начислений? (yes/no)");
+            string updateChoice = Console.ReadLine();
+
+            if (updateChoice.ToLower() == "yes")
+            {
+                UpdateSalaryHistory(employee);
+            }
+            else
+            {
+                Console.WriteLine("Выход без изменений .");
             }
         }
         else
         {
-            Console.WriteLine("Employee not found.");
+            Console.WriteLine("Сотрудник не найден.");
         }
     }
 
     private static void EmployeePayroll()
     {
-        Console.WriteLine("Enter the ID of the employee to calculate payroll:");
+        Console.WriteLine("Введите номер сотрудника для расчёта общих начслений:");
         string employeeId = Console.ReadLine();
 
         Employee employee = employees.FirstOrDefault(e => e.ID == employeeId);
 
         if (employee != null)
         {
-            Console.WriteLine($"Payroll for {employee.FirstName} {employee.LastName}:");
+            Console.WriteLine($" Общие - {employee.FirstName} {employee.LastName}:");
 
-            Console.WriteLine("Enter the start year for the period:");
+            Console.WriteLine("Введите год начала:");
             int startYear = int.Parse(Console.ReadLine());
 
-            Console.WriteLine("Enter the end year for the period:");
+            Console.WriteLine("Введите конечный год:");
             int endYear = int.Parse(Console.ReadLine());
 
             decimal totalPayroll = 0;
@@ -357,60 +484,53 @@ class Program
                 totalPayroll += salary.Total;
             }
 
-            Console.WriteLine($"Total payroll for the period {startYear}-{endYear}: {totalPayroll} rubles");
+            Console.WriteLine($"Общая сумма за период {startYear}-{endYear}: {totalPayroll} рублей");
+
+            Console.WriteLine("Хотите изменить историю начислений? (yes/no)");
+            string updateChoice = Console.ReadLine();
+
+            if (updateChoice.ToLower() == "yes")
+            {
+                UpdateSalaryHistory(employee);
+            }
+            else
+            {
+                Console.WriteLine("Выход без изменений.");
+            }
         }
         else
         {
-            Console.WriteLine("Employee not found.");
+            Console.WriteLine("Сотрудник не найден.");
         }
     }
 
     private static void ExportToXml()
     {
+        XElement xmlDepartments = new XElement("Отделы");
+
+        foreach (Job.Department department in Enum.GetValues(typeof(Job.Department)))
+        {
+            XElement xmlDepartment = new XElement("Отдел",
+                new XAttribute("Название", department),
+                new XElement("Количество_работающих_сотрудников", GetEmployeeCountByDepartment(department.ToString())),
+                new XElement("Количество_работающих_сотрудников_молодежь", GetYoungEmployeeCountByDepartment(department.ToString()))
+            );
+
+            xmlDepartments.Add(xmlDepartment);
+        }
+
+        XDocument xmlDoc = new XDocument(xmlDepartments);
+
+        Console.WriteLine(xmlDoc);
+
         Console.WriteLine("Enter the file path to save the XML file:");
         string filePath = Console.ReadLine();
 
-        XElement xmlRoot = new XElement("Employees");
-
-        foreach (var employee in employees)
-        {
-            XElement xmlEmployee = new XElement("Employee",
-                new XElement("ID", employee.ID),
-                new XElement("FirstName", employee.FirstName),
-                new XElement("LastName", employee.LastName),
-                new XElement("DateOfBirth", employee.DateOfBirth.ToString("yyyy-MM-dd"))
-            );
-
-            XElement xmlJobs = new XElement("JobList",
-                from job in employee.Jobs
-                select new XElement("Job",
-                    new XElement("JobTitle", job.JobTitle),
-                    new XElement("StartDate", job.StartDate.ToString("yyyy-MM-dd")),
-                    new XElement("EndDate", job.EndDate.ToString("yyyy-MM-dd")),
-                    new XElement("Department", job.JobDepartment)
-                )
-            );
-
-            XElement xmlSalaries = new XElement("SalaryList",
-                from salary in employee.Salaries
-                select new XElement("Salary",
-                    new XElement("Year", salary.Year),
-                    new XElement("Month", salary.Month),
-                    new XElement("Total", salary.Total)
-                )
-            );
-
-            xmlEmployee.Add(xmlJobs);
-            xmlEmployee.Add(xmlSalaries);
-
-            xmlRoot.Add(xmlEmployee);
-        }
-
-        XDocument xmlDoc = new XDocument(xmlRoot);
         xmlDoc.Save(filePath);
 
         Console.WriteLine($"Data exported to XML file: {filePath}");
     }
+
 
     private static void ShowAllEmployees()
     {
@@ -418,12 +538,14 @@ class Program
                                         .Select(g => g.First())
                                         .ToList();
 
-        Console.WriteLine("All employees:");
+        Console.WriteLine("Все сотрудники:");
+        Console.WriteLine("--------------------------");
 
         foreach (var employee in distinctEmployees)
         {
             Console.WriteLine($"{employee.FirstName} {employee.LastName} => {string.Join(", ", employee.Jobs.Select(j => j.JobDepartment))}");
         }
+        Console.WriteLine("--------------------------");
     }
 
     private static void EmployeesInMultipleDepartments()
@@ -432,7 +554,7 @@ class Program
             .Where(e => e.Jobs.GroupBy(j => j.JobDepartment).Count() > 1)
             .ToList();
 
-        Console.WriteLine("Employees working in more than one department:");
+        Console.WriteLine("Сотрудники работающие более чем в одном отделе:");
 
         foreach (var employee in employeesInMultipleDepartments)
         {
@@ -451,25 +573,25 @@ class Program
         int maxHiringYear = hiringYearCounts.FirstOrDefault(x => x.Value == hiringYearCounts.Values.Max()).Key;
         int minDismissalYear = dismissalYearCounts.FirstOrDefault(x => x.Value == dismissalYearCounts.Values.Min()).Key;
 
-        Console.WriteLine($"Year with the most employees hired: {maxHiringYear}");
-        Console.WriteLine($"Year with the fewest employees dismissed: {minDismissalYear}");
+        Console.WriteLine($"Год с самым большим набором: {maxHiringYear}");
+        Console.WriteLine($"Год с самым большим числом увольнений: {minDismissalYear}");
     }
 
     private static void EmployeesWithAnniversary()
     {
-        Console.WriteLine("Enter the current year:");
+        Console.WriteLine("Введите текущий год:");
         int currentYear = int.Parse(Console.ReadLine());
 
         var employeesWithAnniversary = employees
             .Where(e => (currentYear - e.DateOfBirth.Year) % 5 == 0)
             .ToList();
 
-        Console.WriteLine("Employees with anniversary this year:");
+        Console.WriteLine("Сотрудники-юбиляры:");
 
         foreach (var employee in employeesWithAnniversary)
         {
             int yearsSinceBirth = currentYear - employee.DateOfBirth.Year;
-            Console.WriteLine($"{employee.FirstName} {employee.LastName} => {yearsSinceBirth} years");
+            Console.WriteLine($"{employee.FirstName} {employee.LastName} => {yearsSinceBirth} лет");
         }
     }
 }
