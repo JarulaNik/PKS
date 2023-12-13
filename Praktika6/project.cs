@@ -12,8 +12,9 @@ class Employee
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public DateTime DateOfBirth { get; set; }
-    public List<Job> Jobs { get; set; } = [];
-    public List<Salary> Salaries { get; set; } = [];
+    public List<Job> Jobs { get; set; } = new List<Job>();
+    public List<Salary> Salaries { get; set; } = new List<Salary>();
+
 }
 
 class Job
@@ -21,9 +22,9 @@ class Job
     public string JobTitle { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public Department JobDepartment { get; set; } // Now the department is represented as an enum
+    public Department JobDepartment { get; set; }
 
-    // Updated enum for departments
+
     public enum Department
     {
         IT,
@@ -56,21 +57,19 @@ class Program
             Console.WriteLine("--------------------------");
             Console.WriteLine("4. Трудовая история сотрудника");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("5. Изменение дат начала и окончания работы сотрудника");
+            Console.WriteLine("5. История зарплаты сотрудника");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("6. История зарплаты сотрудника");
+            Console.WriteLine("6. Заработная плата сотрудника");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("7. Заработная плата сотрудника");
+            Console.WriteLine("7. Экспорт в XML-файл");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("8. Экспорт в XML-файл");
+            Console.WriteLine("8. Показать всех сотрудников");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("9. Показать всех сотрудников");
+            Console.WriteLine("9. Сотрудники, работающие в нескольких отделах");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("10. Сотрудники, работающие в нескольких отделах");
+            Console.WriteLine("10. Года с наибольшим и наименьшим числом приема и увольнения сотрудников");
             Console.WriteLine("--------------------------");
-            Console.WriteLine("11. Года с наибольшим и наименьшим числом приема и увольнения сотрудников");
-            Console.WriteLine("--------------------------");
-            Console.WriteLine("12. Сотрудники с юбилеем в этом году");
+            Console.WriteLine("11. Сотрудники с юбилеем в этом году");
             Console.WriteLine("--------------------------");
             Console.WriteLine("0. Выход");
             Console.WriteLine("--------------------------");
@@ -91,27 +90,24 @@ class Program
                     EmployeeWorkHistory();
                     break;
                 case 5:
-                    ChangeWorkDates();
-                    break;
-                case 6:
                     DisplaySalaryHistory();
                     break;
-                case 7:
+                case 6:
                     EmployeePayroll();
                     break;
-                case 8:
+                case 7:
                     ExportToXml();
                     break;
-                case 9:
+                case 8:
                     ShowAllEmployees();
                     break;
-                case 10:
+                case 9:
                     EmployeesInMultipleDepartments();
                     break;
-                case 11:
+                case 10:
                     YearsWithMostAndFewestEmployees();
                     break;
-                case 12:
+                case 11:
                     EmployeesWithAnniversary();
                     break;
                 case 0:
@@ -123,7 +119,7 @@ class Program
             }
         }
     }
-    
+
 
     private static int GetEmployeeCountByDepartment(string department)
     {
@@ -156,10 +152,9 @@ class Program
 
         DateTime dateOfBirth = DateTime.MinValue;
 
-     
         while (dateOfBirth == DateTime.MinValue)
         {
-            Console.WriteLine("Введите дату рождения сотрудника (в формате гггг-мм-дд :");
+            Console.WriteLine("Введите дату рождения сотрудника (в формате гггг-мм-дд):");
             if (DateTime.TryParse(Console.ReadLine(), out DateTime dob))
             {
                 dateOfBirth = dob;
@@ -170,7 +165,15 @@ class Program
             }
         }
 
-       
+        Console.WriteLine("Введите отдел сотрудника (IT, Logistics, Management, Supply):");
+        string departmentInput = Console.ReadLine();
+
+        if (!Enum.TryParse<Job.Department>(departmentInput, out Job.Department department))
+        {
+            Console.WriteLine("Неверный отдел. Пожалуйста, выберите из предложенных вариантов.");
+            return;
+        }
+
         DateTime hireDate = DateTime.Today;
 
         Employee newEmployee = new Employee
@@ -181,14 +184,12 @@ class Program
             DateOfBirth = dateOfBirth
         };
 
-        Job.Department defaultDepartment = Job.Department.IT;
-
         Job newJob = new Job
         {
             JobTitle = "Default Job Title",
             StartDate = hireDate,
-            EndDate = DateTime.MaxValue, 
-            JobDepartment = defaultDepartment
+            EndDate = DateTime.MaxValue,
+            JobDepartment = department
         };
 
         newEmployee.Jobs.Add(newJob);
@@ -197,6 +198,7 @@ class Program
 
         Console.WriteLine($"Сотрудник {firstName} {lastName} успешно добавлен. Дата приема на работу: {hireDate:dd.MM.yyyy}");
     }
+
 
 
 
@@ -263,13 +265,11 @@ class Program
 
             foreach (var job in employee.Jobs)
             {
-               
-                string endDate = (job.EndDate == DateTime.MaxValue) ? DateTime.Today.ToString("dd.MM.yyyy") : job.EndDate.ToString("dd.MM.yyyy");
-
+                string endDate = (job.EndDate == DateTime.MaxValue) ? "Present" : job.EndDate.ToString("dd.MM.yyyy");
                 Console.WriteLine($"{job.JobDepartment} => {job.StartDate:dd.MM.yyyy}-{endDate}");
             }
 
-            Console.WriteLine("Введите названиие отдела для изменения(или введите 'exit' для выхода :");
+            Console.WriteLine("Введите названиие отдела для изменения (или введите 'exit' для выхода):");
             string departmentName = Console.ReadLine();
 
             if (departmentName.ToLower() != "exit")
@@ -278,9 +278,45 @@ class Program
 
                 if (selectedJob != null)
                 {
-                    Console.WriteLine($" Вы выбрали {selectedJob.JobDepartment} => {selectedJob.StartDate:dd/MM/yyyy}-{selectedJob.EndDate:dd/MM/yyyy}");
+                    Console.WriteLine($" Вы выбрали {selectedJob.JobDepartment} => {selectedJob.StartDate:dd.MM.yyyy}-{(selectedJob.EndDate == DateTime.MaxValue ? "Present" : selectedJob.EndDate.ToString("dd.MM.yyyy"))}");
 
-                    // Further code for updating dates if needed
+                    Console.WriteLine("Выберите, что вы хотите изменить:");
+                    Console.WriteLine("1. Изменить дату начала работы");
+                    Console.WriteLine("2. Изменить дату окончания работы");
+                    Console.WriteLine("3. Изменить и дату начала, и дату окончания работы");
+                    Console.WriteLine("4. Выход без изменения");
+                    int modifyChoice = int.Parse(Console.ReadLine());
+
+                    switch (modifyChoice)
+                    {
+                        case 1:
+                            Console.WriteLine("Введите новую дату начала (yyyy-MM-dd):");
+                            DateTime newStartDate = DateTime.Parse(Console.ReadLine());
+                            selectedJob.StartDate = newStartDate;
+                            Console.WriteLine("История работы успешно сохранена.");
+                            break;
+                        case 2:
+                            Console.WriteLine("Введите новую дату окончания (yyyy-MM-dd):");
+                            DateTime newEndDate = DateTime.Parse(Console.ReadLine());
+                            selectedJob.EndDate = newEndDate;
+                            Console.WriteLine("История работы успешно сохранена.");
+                            break;
+                        case 3:
+                            Console.WriteLine("Введите новую дату начала (yyyy-MM-dd):");
+                            newStartDate = DateTime.Parse(Console.ReadLine());
+                            Console.WriteLine("Введите новую дату окончания (yyyy-MM-dd):");
+                            newEndDate = DateTime.Parse(Console.ReadLine());
+                            selectedJob.StartDate = newStartDate;
+                            selectedJob.EndDate = newEndDate;
+                            Console.WriteLine("История работы успешно сохранена.");
+                            break;
+                        case 4:
+                            Console.WriteLine("Выход без изменения.");
+                            break;
+                        default:
+                            Console.WriteLine("Неверный выбор. Выход без изменений.");
+                            break;
+                    }
                 }
                 else
                 {
@@ -299,55 +335,8 @@ class Program
     }
 
 
-    private static void ChangeWorkDates()
-    {
-        Console.WriteLine("Введите номер сотрудника для изменения периода работы:");
-        string employeeId = Console.ReadLine();
 
-        Employee employee = employees.FirstOrDefault(e => e.ID == employeeId);
-
-        if (employee != null)
-        {
-            Console.WriteLine("Введите название отдела для изменения работы:");
-            string departmentName = Console.ReadLine();
-
-            if (!string.Equals(departmentName, "exit", StringComparison.OrdinalIgnoreCase))
-            {
-                var selectedJob = employee.Jobs.FirstOrDefault(j => j.JobDepartment != null && j.JobDepartment.ToString().ToLower(CultureInfo.InvariantCulture) == departmentName.ToLower(CultureInfo.InvariantCulture));
-
-
-
-
-                if (selectedJob != null)
-                {
-                    Console.WriteLine($"Вы выбрали - {selectedJob.JobDepartment} => {selectedJob.StartDate:dd/MM/yyyy}-{selectedJob.EndDate:dd/MM/yyyy}");
-
-                    Console.WriteLine("Введите новую дату начала (yyyy-MM-dd):");
-                    DateTime newStartDate = DateTime.Parse(Console.ReadLine());
-
-                    Console.WriteLine("Введите конечную дату (yyyy-MM-dd):");
-                    DateTime newEndDate = DateTime.Parse(Console.ReadLine());
-
-                    selectedJob.StartDate = newStartDate;
-                    selectedJob.EndDate = newEndDate;
-
-                    Console.WriteLine("История работы успешно сохранена.");
-                }
-                else
-                {
-                    Console.WriteLine("Выход без изменения. Такого отдела нет.");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Выход без изменения.");
-            }
-        }
-        else
-        {
-            Console.WriteLine("Сотрудник не найден.");
-        }
-    }
+    
 
 
 
@@ -519,34 +508,38 @@ class Program
             xmlDepartments.Add(xmlDepartment);
         }
 
-        XDocument xmlDoc = new XDocument(xmlDepartments);
-
-        Console.WriteLine(xmlDoc);
-
         Console.WriteLine("Enter the file path to save the XML file:");
         string filePath = Console.ReadLine();
 
-        xmlDoc.Save(filePath);
+        XDocument xmlDoc = new XDocument(xmlDepartments);
 
-        Console.WriteLine($"Data exported to XML file: {filePath}");
+        try
+        {
+            xmlDoc.Save(filePath);
+            Console.WriteLine($"Data exported to XML file: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving XML file: {ex.Message}");
+        }
     }
+
 
 
     private static void ShowAllEmployees()
     {
-        var distinctEmployees = employees.GroupBy(e => new { e.FirstName, e.LastName })
-                                        .Select(g => g.First())
-                                        .ToList();
-
         Console.WriteLine("Все сотрудники:");
         Console.WriteLine("--------------------------");
 
-        foreach (var employee in distinctEmployees)
+        foreach (var employee in employees)
         {
-            Console.WriteLine($"{employee.FirstName} {employee.LastName} => {string.Join(", ", employee.Jobs.Select(j => j.JobDepartment))}");
+            string departmentList = string.Join(", ", employee.Jobs.Select(j => j.JobDepartment));
+            Console.WriteLine($"{employee.FirstName} {employee.LastName} => {departmentList}");
         }
+
         Console.WriteLine("--------------------------");
     }
+
 
     private static void EmployeesInMultipleDepartments()
     {
@@ -595,6 +588,3 @@ class Program
         }
     }
 }
-
-
-
